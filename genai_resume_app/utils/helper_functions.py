@@ -47,17 +47,10 @@ def build_prompt():
     prompt = ChatPromptTemplate.from_template(template)
     return prompt
 
-def session_first_embed_and_store(doc_path=None, db_path=None):
-    if doc_path is None:
-        doc_path = os.environ.get("rag_pdf_path")
-    if db_path is None:
-        db_path = os.environ.get("db_path")
-
-    if not doc_path or not db_path:
-        raise ValueError("Both doc_path and db_path must be set.")
-
+def session_first_embed_and_store(doc_path=os.environ.get("rag_pdf_path"),
+                                  db_path=os.environ.get("faiss_index_path")):
     texts = load_docs(doc_path)
     chunks = split_docs(texts)
-    vectorstore_service.embed_chunks_and_upload_to_chroma(chunks, db_path)
-    return
+    vectorstore_service.embed_chunks_and_upload_to_faiss(chunks, db_path)
+
  
