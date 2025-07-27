@@ -1,6 +1,6 @@
 # YourApp/utils/helper_functions.py
 
-from genai_resume_app.services import chroma_service
+from genai_resume_app.services import vectorstore_service
 from langchain.text_splitter import CharacterTextSplitter
 from langchain_community.document_loaders import PyPDFDirectoryLoader
 from langchain_community.vectorstores import Chroma
@@ -58,6 +58,6 @@ def session_first_embed_and_store(doc_path=None, db_path=None):
 
     texts = load_docs(doc_path)
     chunks = split_docs(texts)
-    chroma_service.embed_chunks_and_upload_to_chroma(chunks, db_path)
+    vectorstore_service.embed_chunks_and_upload_to_chroma(chunks, db_path)
     return
  

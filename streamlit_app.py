@@ -1,15 +1,24 @@
 import os
 import streamlit as st
 from langchain.callbacks.base import BaseCallbackHandler
-from genai_resume_app.services import chroma_service, openai_service
+from genai_resume_app.services import vectorstore_service, openai_service
 from genai_resume_app.utils.helper_functions import build_prompt
 
-# Set paths to pre-embedded data
-os.environ["db_path"] = "vector_store"
+os.environ["faiss_index_path"] = "faiss_index"
 
 st.set_page_config(page_title="Interview Me", layout="centered")
 st.title("🧠 Interview Me – Resume Chatbot")
 st.markdown("Ask a question about **Chivon Powers's** work history and experience.")
+
+# Define callback handler for streaming
+class StreamlitCallbackHandler(BaseCallbackHandler):
+    def __init__(self):
+        self.text_placeholder = st.empty()
+        self.text = ""
+
+    def on_llm_new_token(self, token: str, **kwargs):
+        self.text += token
+        self.text_placeholder.markdown(self.text)
 
 question = st.text_input(
     label="Enter your interview question:",
@@ -17,32 +26,18 @@ question = st.text_input(
     key="user_question"
 )
 
-# Define callback handler here (before use)
-class StreamlitCallbackHandler(BaseCallbackHandler):
-    def __init__(self):
-        super().__init__()
-        self.text = ""
-        self.placeholder = st.empty()
-
-    def on_llm_new_token(self, token: str, **kwargs):
-        self.text += token
-        self.placeholder.markdown(self.text)
-
 if st.button("Pose the Question"):
     if not question:
         st.warning("Please enter a question.")
     else:
         try:
-            retriever = chroma_service.get_most_similar_chunks_for_query(os.environ["db_path"])
+            retriever = vectorstore_service.get_most_similar_chunks_for_query(os.environ["faiss_index_path"])
             prompt = build_prompt()
-
             callback_handler = StreamlitCallbackHandler()
-            
-            # Make sure your openai_service.py has get_llm_answer_stream implemented correctly
-            answer = openai_service.get_llm_answer_stream(prompt, retriever, question, callback_handler)
-            
-            # You can optionally print final answer again or leave streaming output only
-            # st.success(answer)
 
+            # Pass the callback handler to the streaming function
+            answer = openai_service.get_llm_answer_stream(prompt, retriever, question, callback_handler)
+
+            # The answer is streamed token-by-token above, no need to st.success(answer) again here
         except Exception as e:
             st.error(f"Error processing your question: {e}")

@@ -1,19 +1,18 @@
 # ingest_resume.py
 
 import os
-from dotenv import load_dotenv
-from genai_resume_app.utils.helper_functions import session_first_embed_and_store
+from genai_resume_app.services import vectorstore_service  # renamed import
+from genai_resume_app.utils.helper_functions import split_docs, load_docs
 
-# ✅ Load environment variables from .env
-load_dotenv()
+def main():
+    doc_path = os.environ.get("rag_pdf_path", "docs")
+    index_path = os.environ.get("faiss_index_path", "faiss_index")
 
-# ✅ Sanity check (you can remove these print lines later)
-print("rag_pdf_path:", os.getenv("rag_pdf_path"))
-print("db_path:", os.getenv("db_path"))
+    print(f"Loading docs from: {doc_path}")
+    texts = load_docs(doc_path)
+    chunks = split_docs(texts)
+    vectorstore_service.embed_chunks_and_upload_to_faiss(chunks, index_path)
+    print("Embedding and FAISS index creation complete.")
 
-# ✅ Set them as environment variables for internal calls
-os.environ["rag_pdf_path"] = os.getenv("rag_pdf_path")
-os.environ["db_path"] = os.getenv("db_path")
-
-session_first_embed_and_store()
-print("✅ Resume embedded and stored in vector DB.")
+if __name__ == "__main__":
+    main()
