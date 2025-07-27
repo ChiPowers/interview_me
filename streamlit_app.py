@@ -3,6 +3,9 @@ import streamlit as st
 from genai_resume_app.services import vectorstore_service, openai_service
 from genai_resume_app.utils.helper_functions import build_prompt
 from genai_resume_app.utils.custom_callback import SimpleStreamHandler
+from dotenv import load_dotenv
+
+load_dotenv() 
 
 os.environ["faiss_index_path"] = "faiss_index"
 

@@ -2,9 +2,6 @@ from langchain_community.vectorstores import FAISS
 from langchain_community.document_loaders import PyPDFDirectoryLoader
 from langchain_openai import OpenAIEmbeddings
 import os
-from dotenv import load_dotenv
-
-load_dotenv()  # Load environment variables from .env file
 
 def load_docs(doc_path):
     """Load PDFs from directory and return list of documents."""
