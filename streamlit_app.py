@@ -9,13 +9,13 @@ load_dotenv()
 
 os.environ["faiss_index_path"] = "faiss_index"
 
-st.set_page_config(page_title="Interview Me", layout="centered")
-st.title("🧠 Interview Me – Resume Chatbot")
-st.markdown("Ask questions about my work history and experience.")
+st.set_page_config(page_title="Interview Chivon Powers", layout="centered")
+st.title("🧠 Interview Me as a Chatbot")
+st.markdown("Ask me questions about my work history and professional experience.")
 
 question = st.text_input(
     label="Enter your interview question:",
-    placeholder="e.g., Tell me about a data science project you built",
+    placeholder="e.g., Describe a data science project you built",
     key="user_question"
 )
 
