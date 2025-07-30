@@ -1,6 +1,6 @@
 # 🧠 Interview Me – AI Resume Chatbot
 
-A conversational AI app that lets people ask questions about your work experience — perfect for interviews, networking, or portfolio sites. It uses Retrieval-Augmented Generation (RAG) with OpenAI and ChromaDB to provide accurate, context-rich answers from your resume and CV.
+A conversational AI app that lets people ask questions about my work experience. It uses Retrieval-Augmented Generation (RAG) with OpenAI and FAISS to provide accurate, context-rich answers from my resume and CV.
 
 ---
 
