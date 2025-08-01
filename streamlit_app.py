@@ -2,6 +2,12 @@ import streamlit as st
 from genai_resume_app.services import vectorstore_service, openai_service
 from genai_resume_app.utils.helper_functions import build_prompt
 
+import os
+from dotenv import load_dotenv
+
+# Load environment variables early
+load_dotenv()
+
 INDEX_PATH = "faiss_index"
 
 st.set_page_config(page_title="Interview Me", layout="centered")

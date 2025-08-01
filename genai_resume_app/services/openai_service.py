@@ -15,7 +15,7 @@ def get_llm_answer(prompt, retriever, question):
     Used as a fallback if async isn't available.
     """
     llm = ChatOpenAI(
-        model_name="gpt-4o",
+        model_name="gpt-4.1-nano",
         temperature=0.2,
         callbacks=[langfuse_handler]
     )
@@ -35,7 +35,7 @@ async def get_llm_answer_with_stream(prompt, retriever, question):
     Yields chunks of the response as they're generated.
     """
     llm = ChatOpenAI(
-        model_name="gpt-4o",
+        model_name="gpt-4.1-nano",
         temperature=0.2,
         streaming=True,
         callbacks=[langfuse_handler]
