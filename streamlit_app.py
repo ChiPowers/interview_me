@@ -8,7 +8,7 @@ st.set_page_config(page_title="Interview Me", layout="centered")
 st.title("🧠 Interview Me – Resume Chatbot")
 st.markdown("Ask a question about **Chivon Powers's** work history and experience.")
 
-# ✅ Wrap input and button in a form
+# ✅ Wrap input in a form
 with st.form(key="qa_form", clear_on_submit=False):
     question = st.text_input(
         label="Enter your interview question:",
