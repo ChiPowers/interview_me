@@ -9,9 +9,9 @@ from langfuse.langchain import CallbackHandler
 langfuse_handler = CallbackHandler()
 
 def get_llm_answer_with_callback(prompt, retriever, question):
-    llm = ChatOpenAI(model_name="gpt-4o", temperature=0.2, callbacks=[langfuse_handler])
+    llm = ChatOpenAI(model_name="gpt-4.1-nano", temperature=0.2, callbacks=[langfuse_handler])
     
-    # Build chain manually as you had it
+    # Build chain manually
     rag_chain = (
         {"context": retriever | format_docs, "query": RunnablePassthrough()}
         | prompt
