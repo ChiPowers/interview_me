@@ -15,7 +15,7 @@ with st.form(key="qa_form", clear_on_submit=False):
         placeholder="e.g., Tell me about a time Chivon solved a tough problem",
         key="user_question"
     )
-    submitted = st.form_submit_button("Pose the Question")  # Triggered by Enter or button
+    submitted = st.form_submit_button("Pose the Question")  # Use Enter or button
 
 if submitted:
     if not question:
