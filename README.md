@@ -9,15 +9,16 @@ A conversational AI app that lets people ask questions about my work experience.
 - 🔎 Retrieves relevant resume sections using vector search
 - 🤖 Uses OpenAI (e.g. GPT-4 or GPT-3.5) to generate intelligent answers
 - 💬 Built with Streamlit for a friendly web interface
-- 📄 Embeds your resume and CV (PDFs) into FAISS
+- 📄 Embeds my resume and CV (PDFs) into FAISS
 - ⚡ Streams responses for fast and interactive UX
+  
 
 ---
 
 ## 📁 Project Structure
 interview_bot/
 │
-├── docs/ # Your resume and CV PDFs
+├── docs/ # Resume and CV PDFs
 ├── vector_store/ # FAISS directory (auto-generated)
 ├── genai_resume_app/
 │ ├── services/
