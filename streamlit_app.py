@@ -1,6 +1,5 @@
 import streamlit as st
-from genai_resume_app.services import vectorstore_service, openai_service
-from genai_resume_app.utils.helper_functions import build_prompt
+from genai_resume_app.services import openai_service
 
 import os
 from dotenv import load_dotenv
@@ -8,40 +7,38 @@ from dotenv import load_dotenv
 # Load environment variables early
 load_dotenv()
 
-INDEX_PATH = "faiss_index"
-
 st.set_page_config(page_title="Interview Me", layout="centered")
-st.title("🧠 Interview Me – Resume Chatbot")
-st.markdown("Ask a question about **Chivon Powers's** work history and experience.")
+st.title("🧠 Interview Chivon Powers")
+st.markdown(
+    "This bot responds as me, using my resume and other documents to answer your interview questions. "
+    "It’s a practical demonstration of the AI skills I bring to the table. Ask a question about my work history and experience."
+)
 
-# ✅ Wrap input in a form
+# Wrap input in a form for better UX
 with st.form(key="qa_form", clear_on_submit=False):
     question = st.text_input(
         label="Enter your interview question:",
-        placeholder="e.g., Tell me about a time Chivon solved a tough problem",
+        placeholder="e.g., Tell me about a time you solved a tough problem",
         key="user_question"
     )
-    submitted = st.form_submit_button("Pose the Question")  # Use Enter or button
+    submitted = st.form_submit_button("Ask the Question")  # Submit with button or Enter
 
 if submitted:
     if not question:
         st.warning("Please enter a question.")
     else:
         try:
-            retriever = vectorstore_service.get_most_similar_chunks_for_query(INDEX_PATH)
-            prompt = build_prompt()
             placeholder = st.empty()
-
             response_accumulator = [""]  # Mutable container for streaming
 
             def on_chunk(chunk):
                 response_accumulator[0] += chunk
-                placeholder.markdown("### 🧠 AI Interview Answer\n" + response_accumulator[0])
+                placeholder.markdown("### 🧠 Answer\n" + response_accumulator[0])
 
-            # Try streaming first, fallback to sync
+            # Streaming enabled; fallback handled inside openai_service.get_answer_auto
             result = openai_service.get_answer_auto(question, on_chunk=on_chunk)
             if result:
-                placeholder.markdown("### 🧠 AI Interview Answer\n" + result)
+                placeholder.markdown("### 🧠 Answer\n" + result)
 
         except Exception as e:
             st.error(f"Error processing your question: {e}")

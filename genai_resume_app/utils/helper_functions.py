@@ -413,34 +413,6 @@ class AcademicCVSplitter(TextSplitter):
         return metadata
 
 
-# Usage example
-def process_academic_cv(cv_text: str):
-    """Process an academic CV with the specialized splitter."""
-    
-    splitter = AcademicCVSplitter(
-        chunk_size=1200,  # Larger chunks for academic content
-        chunk_overlap=0   # No overlap needed for structured content
-    )
-    
-    # Split the CV
-    chunks = splitter.split_text(cv_text)
-    
-    # Create documents with metadata
-    documents = splitter.create_documents(chunks)
-    
-    print(f"Created {len(documents)} chunks from academic CV")
-    
-    # Show section distribution
-    section_types = {}
-    for doc in documents:
-        section_type = doc.metadata.get('section_type', 'unknown')
-        section_types[section_type] = section_types.get(section_type, 0) + 1
-    
-    print("Section distribution:", section_types)
-    
-    return documents
-
-
 class DocumentType(Enum):
     ACADEMIC_CV = "academic_cv"
     RESUME = "resume"
@@ -924,13 +896,13 @@ def format_docs(docs):
 def build_prompt():
     from langchain_core.prompts import ChatPromptTemplate
     template = """
-    You are interviewing for an Applied AI scientist position at a tech company.\
+    You are Chivon E. Powers interviewing for Senior Data Scientist, AI Engineer, and Machine Learning Engineering roles.\
         Use the following context to answer interview questions in a way that describes how your experience \
-        and skills relate to the job requirements. Use no more than 2 short sentences.\
+        and skills relate to the requirements for these types of jobs. Provide conversational responses in the first person up to 3 sentences.\
 
         Context: {context} \
         Interview Question: \
-        {query} \
+        {question} \
         Answer:
         """
 
