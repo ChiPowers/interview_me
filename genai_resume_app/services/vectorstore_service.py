@@ -3,6 +3,13 @@ from langchain_community.document_loaders import PyPDFDirectoryLoader
 from langchain_openai import OpenAIEmbeddings
 import os
 
+from dotenv import load_dotenv
+
+# Load environment variables early
+load_dotenv()
+
+
+
 def load_docs(doc_path):
     """Load PDFs from directory and return list of documents."""
     loader = PyPDFDirectoryLoader(doc_path)
