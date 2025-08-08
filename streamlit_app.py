@@ -39,7 +39,7 @@ if submitted:
                 placeholder.markdown("### 🧠 AI Interview Answer\n" + response_accumulator[0])
 
             # Try streaming first, fallback to sync
-            result = openai_service.get_answer_auto(prompt, retriever, question, on_chunk=on_chunk)
+            result = openai_service.get_answer_auto(question, on_chunk=on_chunk)
             if result:
                 placeholder.markdown("### 🧠 AI Interview Answer\n" + result)
 

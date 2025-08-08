@@ -1,70 +1,53 @@
-import asyncio
+import os
+from dotenv import load_dotenv
 from langchain_openai import ChatOpenAI
-from langchain_core.output_parsers import StrOutputParser
-from langchain_core.runnables import RunnablePassthrough
-from genai_resume_app.utils.helper_functions import format_docs
-from langfuse.langchain import CallbackHandler
+from langchain.memory import ConversationBufferMemory
+from langchain.chains import ConversationalRetrievalChain
+from langchain.callbacks.base import BaseCallbackHandler
+from genai_resume_app.services import vectorstore_service
 
-# Initialize Langfuse callback handler
-langfuse_handler = CallbackHandler()
+load_dotenv()  # ensure .env is loaded early
 
+class OnChunkCallbackHandler(BaseCallbackHandler):
+    def __init__(self, on_chunk):
+        self.on_chunk = on_chunk
 
-def get_llm_answer(prompt, retriever, question):
+    def on_llm_new_token(self, token: str, **kwargs):
+        if self.on_chunk:
+            self.on_chunk(token)
+
+def get_answer_auto(question: str, on_chunk=None) -> str:
     """
-    Synchronous version of the LLM call (non-streaming).
-    Used as a fallback if async isn't available.
+    Query the vector store with conversation memory and GPT-4.1-nano.
+    If on_chunk callback is provided, streams tokens as they arrive.
+    Otherwise, returns full answer string.
     """
+    # Load retriever (FAISS index)
+    retriever = vectorstore_service.get_most_similar_chunks_for_query("faiss_index")
+
+    # Setup LLM with or without streaming
     llm = ChatOpenAI(
         model_name="gpt-4.1-nano",
-        temperature=0.2,
-        callbacks=[langfuse_handler]
-    )
-    rag_chain = (
-        {"context": retriever | format_docs, "query": RunnablePassthrough()}
-        | prompt
-        | llm
-        | StrOutputParser()
-    )
-    response = rag_chain.invoke(question)
-    return response
-
-
-async def get_llm_answer_with_stream(prompt, retriever, question):
-    """
-    Async streaming version of the LLM call.
-    Yields chunks of the response as they're generated.
-    """
-    llm = ChatOpenAI(
-        model_name="gpt-4.1-nano",
-        temperature=0.2,
-        streaming=True,
-        callbacks=[langfuse_handler]
-    )
-    rag_chain = (
-        {"context": retriever | format_docs, "query": RunnablePassthrough()}
-        | prompt
-        | llm
-        | StrOutputParser()
+        temperature=0,
+        streaming=bool(on_chunk),
+        callbacks=[OnChunkCallbackHandler(on_chunk)] if on_chunk else [],
+        openai_api_key=os.environ.get("OPENAI_API_KEY")
     )
 
-    async for chunk in rag_chain.astream(question):
-        yield chunk
+    # Setup conversation memory
+    memory = ConversationBufferMemory(
+        memory_key="chat_history",
+        return_messages=True
+    )
 
+    # Build the Conversational Retrieval Chain
+    qa_chain = ConversationalRetrievalChain.from_llm(
+        llm=llm,
+        retriever=retriever,
+        memory=memory
+    )
 
-def get_answer_auto(prompt, retriever, question, on_chunk=None):
-    """
-    Auto-detect whether async streaming can be used.
-    - If streaming works: returns chunks via on_chunk callback
-    - Otherwise: falls back to normal synchronous call
-    """
-    try:
-        async def run_stream():
-            async for chunk in get_llm_answer_with_stream(prompt, retriever, question):
-                if on_chunk:
-                    on_chunk(chunk)
+    # Run the chain with the question input
+    result = qa_chain.invoke({"question": question})
 
-        asyncio.run(run_stream())
-        return None  # streaming handled via callback
-    except RuntimeError:
-        # Fallback to non-async version (e.g., in environments that don't support asyncio.run)
-        return get_llm_answer(prompt, retriever, question)
+    return result["answer"]
