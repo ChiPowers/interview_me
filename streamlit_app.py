@@ -12,7 +12,7 @@ from io import BytesIO
 # Load environment variables early
 load_dotenv()
 
-# Paths to your images (update as needed)
+# Paths to images
 logo_path = "assets/logotat.png"
 headshot_path = "assets/cp_face.png"
 
