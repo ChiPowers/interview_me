@@ -1,7 +1,7 @@
 # ingest_resume.py
 
 import os
-from genai_resume_app.services import vectorstore_service  # renamed import
+from genai_resume_app.services import vectorstore_service 
 from genai_resume_app.utils.helper_functions import split_docs, load_docs
 
 def main():
