@@ -1,7 +1,6 @@
 import os
 from dotenv import load_dotenv
 from langchain_openai import ChatOpenAI
-from langchain.memory import ConversationBufferMemory
 from langchain.chains import ConversationalRetrievalChain
 from langchain.callbacks.base import BaseCallbackHandler
 from genai_resume_app.services import vectorstore_service
@@ -17,27 +16,22 @@ class OnChunkCallbackHandler(BaseCallbackHandler):
         if self.on_chunk:
             self.on_chunk(token)
 
-# Initialize a global ConversationBufferMemory instance to keep conversation state
-memory = ConversationBufferMemory(memory_key="chat_history", return_messages=True)
-
-def get_answer_auto(question: str, on_chunk=None) -> str:
+def get_answer_auto(question: str, memory, on_chunk=None) -> str:
     """
-    Query the vector store with conversation memory and GPT-4.1-nano.
-    Supports streaming via on_chunk callback, otherwise returns full answer.
+    Synchronous or streaming LLM call with conversation memory and retriever.
+    Pass on_chunk callback to stream tokens progressively.
     """
-
     retriever = vectorstore_service.get_most_similar_chunks_for_query("faiss_index")
     prompt = build_prompt()
 
     llm = ChatOpenAI(
         model_name="gpt-4.1-nano",
-        temperature=0,
+        temperature=0.2,  # Slightly higher for varied answers
         streaming=bool(on_chunk),
         callbacks=[OnChunkCallbackHandler(on_chunk)] if on_chunk else [],
         openai_api_key=os.environ.get("OPENAI_API_KEY")
     )
 
-    # Setup the Conversational Retrieval Chain with memory and your prompt
     qa_chain = ConversationalRetrievalChain.from_llm(
         llm=llm,
         retriever=retriever,
@@ -45,7 +39,6 @@ def get_answer_auto(question: str, on_chunk=None) -> str:
         combine_docs_chain_kwargs={"prompt": prompt}
     )
 
-    # Run the chain with the question input
+    # Pass question to chain, get full response
     result = qa_chain.invoke({"question": question})
-
     return result["answer"]
