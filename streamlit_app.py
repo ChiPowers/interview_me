@@ -9,6 +9,7 @@ import time
 import base64
 from io import BytesIO
 
+
 # Load environment variables early
 load_dotenv()
 
@@ -112,8 +113,9 @@ if "memory" not in st.session_state:
     from langchain.memory import ConversationBufferMemory
     st.session_state.memory = ConversationBufferMemory(memory_key="chat_history", return_messages=True)
 
+
 # Wrap input in a form for better UX
-with st.form(key="qa_form", clear_on_submit=False):
+with st.form(key="qa_form", clear_on_submit=True):
     question = st.text_input(
         label="Enter your interview question:",
         placeholder="e.g., Tell me about a time you solved a tough problem",
@@ -143,7 +145,7 @@ if submitted:
                 else:
                     skip_echo[0] = False
 
-            time.sleep(0.03)  # slow down streaming for talking pace
+            #time.sleep(0.01)  # slow down streaming for talking pace
             response_accumulator[0] += chunk
             # Render the answer with headshot on the left
             answer_html = f"""
