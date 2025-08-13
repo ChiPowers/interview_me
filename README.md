@@ -1,4 +1,4 @@
-# 🧠 Interview Me – AI Resume Chatbot
+# 🧠 Interview Chivon Powers – Resume Bot
 
 A conversational AI app that lets people ask questions about my work experience. It uses Retrieval-Augmented Generation (RAG) with OpenAI and FAISS to provide accurate, context-rich answers from my resume and CV.
 
