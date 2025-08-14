@@ -2,78 +2,93 @@ import os
 from dotenv import load_dotenv
 from langchain_openai import ChatOpenAI
 from langchain.chains import ConversationalRetrievalChain
+from langchain.chains.combine_documents.stuff import StuffDocumentsChain
+from langchain.chains.llm import LLMChain
 from langchain.callbacks.base import BaseCallbackHandler
+from langsmith import traceable
+
 from genai_resume_app.services import vectorstore_service
 from genai_resume_app.utils.helper_functions import build_prompt
 
 load_dotenv()
+
+
+class OnChunkCallbackHandler(BaseCallbackHandler):
+    """Handles token streaming and ensures clean answer without repeated question."""
+    def __init__(self, on_chunk=None):
+        self.on_chunk = on_chunk
+        self.buffer = []
+
+    def on_llm_new_token(self, token: str, **kwargs):
+        cleaned = token.replace("Ġ", " ")  # fix tokenization artifact
+        self.buffer.append(cleaned)
+        if self.on_chunk:
+            self.on_chunk(cleaned)
+
+    def get_final_text(self) -> str:
+        return "".join(self.buffer).strip()
+
+
 def create_qa_chain(memory=None):
-    """
-    Factory function to create a ConversationalRetrievalChain instance.
-    Pass `memory` if you want to keep conversation context.
-    """
+    """Factory to create a clean ConversationalRetrievalChain instance."""
     retriever = vectorstore_service.get_most_similar_chunks_for_query("faiss_index")
-    prompt = build_prompt()
 
     llm = ChatOpenAI(
         model_name="gpt-4.1-nano",
         temperature=0.2,
-        streaming=False,  # No streaming for evaluations
-        openai_api_key=os.environ.get("OPENAI_API_KEY")
+        streaming=False,
+        openai_api_key=os.environ.get("OPENAI_API_KEY"),
     )
 
-    qa_chain = ConversationalRetrievalChain.from_llm(
+    llm_chain = LLMChain(
         llm=llm,
-        retriever=retriever,
-        memory=memory,
-        combine_docs_chain_kwargs={"prompt": prompt}
+        prompt=build_prompt(),
+        input_key="question",
     )
-    return qa_chain
+
+    combine_docs_chain = StuffDocumentsChain(
+        llm_chain=llm_chain,
+        document_variable_name="context",
+        output_key="answer",
+    )
+
+    return ConversationalRetrievalChain(
+        retriever=retriever,
+        combine_docs_chain=combine_docs_chain,
+        memory=memory,
+        question_generator=None,
+    )
 
 
-class OnChunkCallbackHandler(BaseCallbackHandler):
-    def __init__(self, on_chunk):
-        self.on_chunk = on_chunk
-
-    def on_llm_new_token(self, token: str, **kwargs):
-        if self.on_chunk:
-            self.on_chunk(token)
-
-def get_answer_auto(question: str, memory, on_chunk=None) -> str:
-    """
-    Synchronous or streaming LLM call with conversation memory and retriever.
-    Pass on_chunk callback to stream tokens progressively.
-    """
+@traceable(run_type="chain", name="get_answer_auto")
+def get_answer_auto(question: str, memory=None, on_chunk=None) -> dict:
     retriever = vectorstore_service.get_most_similar_chunks_for_query("faiss_index")
-    prompt = build_prompt()
+    handler = OnChunkCallbackHandler(on_chunk)
 
     llm = ChatOpenAI(
         model_name="gpt-4.1-nano",
         temperature=0.2,
         streaming=bool(on_chunk),
-        callbacks=[OnChunkCallbackHandler(on_chunk)] if on_chunk else [],
-        openai_api_key=os.environ.get("OPENAI_API_KEY")
+        callbacks=[handler] if on_chunk else [],
+        openai_api_key=os.environ.get("OPENAI_API_KEY"),
     )
 
     qa_chain = ConversationalRetrievalChain.from_llm(
         llm=llm,
         retriever=retriever,
         memory=memory,
-        combine_docs_chain_kwargs={"prompt": prompt}
+        combine_docs_chain_kwargs={"prompt": build_prompt()},
     )
 
-    # Run the chain
-    result = qa_chain.invoke({"question": question}, config={"metadata": {"step": "pass_q_thru_chain"}})
+    result = qa_chain.invoke(
+        {"question": question},
+        config={"return_only_outputs": True},
+    )
 
-    # Get retrieved documents for logging
-    retrieved_docs = retriever.get_relevant_documents(question)
-    retrieved_texts = [doc.page_content for doc in retrieved_docs]
+    final_answer = handler.get_final_text() if on_chunk else result["answer"]
+    retrieved_texts = [doc.page_content for doc in retriever.get_relevant_documents(question)]
 
-    # Log to LangSmith so evaluators can use this
-    from langsmith import client as ls_client
-    ls_client.log_outputs({
-        "answer": result["answer"],
-        "retrieved_context": "\n".join(retrieved_texts)
-    })
-
-    return result["answer"]
+    return {
+        "answer": final_answer,
+        "retrieved_context": "\n".join(retrieved_texts),
+    }

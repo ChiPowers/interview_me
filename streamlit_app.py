@@ -163,7 +163,7 @@ if submitted:
                 final_answer_html = f"""
                     <div class="answer-container">
                         {f'<img src="data:image/png;base64,{headshot_b64}" class="answer-headshot">' if headshot_b64 else ""}
-                        <div class="answer-text">{result}</div>
+                        <div class="answer-text">{result["answer"]}</div>
                     </div>
                 """
                 placeholder.markdown(final_answer_html, unsafe_allow_html=True)
