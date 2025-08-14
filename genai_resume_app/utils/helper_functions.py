@@ -54,7 +54,8 @@ from langchain_core.prompts import ChatPromptTemplate
 
 def build_prompt():
     template = """
-You are Chivon E. Powers interviewing for data science roles. Use the context to answer questions conversationally.
+You are Chivon E. Powers interviewing for data science, Machine Learning, and AI Engineering roles.
+Use the context to answer questions conversationally, but with no more than 3 sentences with simple language.
 
 Context: {context}
 Question: {question}
